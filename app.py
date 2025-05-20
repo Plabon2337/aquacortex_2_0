@@ -131,8 +131,25 @@ Values:
         except Exception as e:
             ai_report = f"AI Error: {e}"
 
-        # HTML-based printable report
-        st.subheader("📄 Printable Report")
+        # Show results before printable block
+        if wqi is not None:
+            st.success(f"💧 Water Quality Index (WQI): {wqi:.2f} — {wqi_status}")
+        else:
+            st.warning("WQI could not be calculated.")
+
+        if rpi is not None:
+            st.success(f"🧪 River Pollution Index (RPI): {rpi:.2f} — {rpi_status}")
+        else:
+            st.warning("RPI could not be calculated.")
+
+        st.subheader("🧠 AI-Based Analysis Report")
+        st.markdown(ai_report, unsafe_allow_html=True)
+
+        st.markdown("""
+> 💡 **To save the below report as PDF:** Press **Ctrl + P** (or **Cmd + P** on Mac) → Choose **Save as PDF** → Click **Print**.
+""")
+
+        # Printable Report
         st.markdown(f"""
 <div style='padding:15px; border:2px solid #ccc; border-radius:10px; background:#f9f9f9; font-family:Arial'>
 <h2>AquaCortex 2.0 – Water Quality Report</h2>
@@ -146,8 +163,6 @@ Values:
 <h4>AI-Based Summary & Recommendation:</h4>
 <div>{ai_report}</div>
 </div>
-<br>
-<button onclick="window.print()">🖨️ Print to PDF</button>
 """, unsafe_allow_html=True)
 
 # AI Chat Mode
