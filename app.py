@@ -15,15 +15,15 @@ mode = st.sidebar.radio(
     ("💬 AI-Assisted Chat", "📊 Water Test Data Analysis")
 )
 
-# ─────────────────────────────
-# Mode 1: AI-Assisted Chat
-# ─────────────────────────────
 if mode == "💬 AI-Assisted Chat":
     st.subheader("💬 Ask AquaCortex")
     user_input = st.text_input("Ask about water quality, pollution, treatment, or civil/environmental engineering:")
 
     if st.button("Ask"):
-        if any(kw in user_input.lower() for kw in ["water", "pollution", "river", "treatment", "ecology", "climate", "irrigation", "quality", "groundwater", "civil", "wastewater", "hydrology", "environment"]):
+        if any(kw in user_input.lower() for kw in [
+            "water", "pollution", "river", "treatment", "ecology", "climate",
+            "irrigation", "quality", "groundwater", "civil", "wastewater", "hydrology", "environment"
+        ]):
             try:
                 response = client.chat.completions.create(
                     model="gpt-3.5-turbo",
@@ -38,9 +38,6 @@ if mode == "💬 AI-Assisted Chat":
         else:
             st.warning("❌ AquaCortex only responds to water, environment, or civil engineering questions.")
 
-# ─────────────────────────────
-# Mode 2: Water Test Data Analysis
-# ─────────────────────────────
 elif mode == "📊 Water Test Data Analysis":
     st.subheader("📊 Water Quality Index & Pollution Index Tool")
 
@@ -72,10 +69,7 @@ elif mode == "📊 Water Test Data Analysis":
         input_data[key] = [val1, val2, val3]
 
     if st.button("Analyze Water Quality"):
-        total_inputs = sum(
-            1 for param in input_data.values()
-            for v in param if v.strip() != ""
-        )
+        total_inputs = sum(1 for param in input_data.values() for v in param if v.strip() != "")
         st.info(f"✅ You provided {total_inputs} test values.")
         if total_inputs < 3:
             st.warning("⚠️ Please enter at least 3 valid values for WQI calculation.")
@@ -101,14 +95,13 @@ elif mode == "📊 Water Test Data Analysis":
         if len(q_values) >= 3:
             wqi = sum(q_values) / sum(w_values)
             st.success(f"🌊 Water Quality Index (WQI): {wqi:.2f}")
-            st.markdown("Status: " +
-                        ("✅ Excellent" if wqi <= 25 else
-                         "✅ Good" if wqi <= 50 else
-                         "⚠️ Poor" if wqi <= 75 else
-                         "❌ Very Poor" if wqi <= 100 else
-                         "🚨 Unsuitable"))
+            wqi_status = ("Excellent" if wqi <= 25 else "Good" if wqi <= 50 else
+                          "Poor" if wqi <= 75 else "Very Poor" if wqi <= 100 else "Unsuitable")
+            st.markdown(f"Status: {wqi_status}")
         else:
             st.warning("⚠️ Not enough valid parameters to calculate WQI.")
+            wqi = None
+            wqi_status = "N/A"
 
         def get_rpi_score(param, value):
             if param == "DO":
@@ -131,26 +124,29 @@ elif mode == "📊 Water Test Data Analysis":
         if len(rpi_scores) == 4:
             rpi = sum(rpi_scores) / 4
             st.success(f"🧪 Pollution Index (RPI): {rpi:.2f}")
-            st.markdown("Pollution Level: " +
-                        ("✅ Non/mildly polluted" if rpi <= 2 else
-                         "⚠️ Lightly polluted" if rpi <= 3 else
-                         "❌ Moderately polluted" if rpi <= 6 else
-                         "🚨 Severely polluted"))
+            rpi_status = ("Non/mildly polluted" if rpi <= 2 else "Lightly polluted" if rpi <= 3
+                          else "Moderately polluted" if rpi <= 6 else "Severely polluted")
+            st.markdown(f"Pollution Level: {rpi_status}")
         else:
             st.warning("⚠️ Need DO, BOD₅, TSS, and NH₃-N for RPI.")
+            rpi = None
+            rpi_status = "N/A"
 
         st.markdown("---")
-        st.subheader("🧠 AI-Based Report: Suitability + Treatment Suggestion")
+        st.subheader("🧠 AI-Based Report")
 
-        prompt = f"""
-You are an expert environmental engineer. Analyze the following river water quality test results and provide a professional report that includes:
-1. Suitability for uses (drinking, irrigation, recreation, etc.)
-2. Potential health/environmental risks.
-3. Simple treatment suggestions.
+        prompt = (
+            "You are an expert environmental engineer. Analyze the following river water quality test results "
+            "and provide:
+1. Suitability for use (drinking, irrigation, recreation, etc.)
+"
+            "2. Health/environmental risks
+3. Simple treatment methods.
 
-Water test data:
-{input_data}
-"""
+"
+            f"Test data:
+{input_data}"
+        )
 
         try:
             response = client.chat.completions.create(
@@ -167,48 +163,29 @@ Water test data:
             st.error(f"OpenAI API error: {e}")
 
         st.markdown("---")
-        st.subheader("📝 Optional: Water Source Info + Print Report")
+        st.subheader("📝 Source Info + Printable Summary")
 
-        source_name = st.text_input("Water Source Name (e.g., Turag River)", key="src_name")
-        location = st.text_input("Location (e.g., Mirpur Bridge)", key="src_loc")
+        source_name = st.text_input("Water Source Name", key="src_name")
+        location = st.text_input("Location", key="src_loc")
         description = st.text_area("Short Description", key="src_desc")
 
-        if "print_ready" not in st.session_state:
-            st.session_state.print_ready = ""
-
-        if ai_text and 'wqi' in locals() and 'rpi' in locals():
+        if wqi and rpi and ai_text:
             if st.button("📄 Generate Printable Summary"):
-                summary = f"""
-### AquaCortex 2.0 — Water Quality Report
-
-**Water Source**: {source_name or "N/A"}  
-**Location**: {location or "N/A"}  
-
-**Short Description**:  
-{description or "N/A"}  
-
----
-
-**🌊 WQI**: {wqi:.2f}  
-- Status: {"Excellent" if wqi <= 25 else "Good" if wqi <= 50 else "Poor" if wqi <= 75 else "Very Poor" if wqi <= 100 else "Unsuitable"}
-
-**🧪 RPI**: {rpi:.2f}  
-- Status: {"Non/mildly polluted" if rpi <= 2 else "Lightly polluted" if rpi <= 3 else "Moderately polluted" if rpi <= 6 else "Severely polluted"}
-
----
-
-**🧠 AI Analysis & Treatment**:  
-{ai_text}
-"""
-                st.session_state.print_ready = summary
-                st.success("✅ Printable report generated.")
-
-        if st.session_state.print_ready:
-            st.markdown("## 🖨️ Print Preview")
-            st.markdown(st.session_state.print_ready)
-            st.download_button(
-                label="⬇️ Download Report (.txt)",
-                data=st.session_state.print_ready,
-                file_name="AquaCortex_Report.txt",
-                mime="text/plain"
-            )
+                summary = (
+                    f"### AquaCortex 2.0 — Water Quality Report\n\n"
+                    f"**Water Source**: {source_name or 'N/A'}\n"
+                    f"**Location**: {location or 'N/A'}\n\n"
+                    f"**Short Description**:\n{description or 'N/A'}\n\n"
+                    f"---\n"
+                    f"**🌊 WQI**: {wqi:.2f}  |  Status: {wqi_status}\n"
+                    f"**🧪 RPI**: {rpi:.2f}  |  Status: {rpi_status}\n\n"
+                    f"---\n"
+                    f"**🧠 AI Summary & Treatment Suggestion**:\n{ai_text}"
+                )
+                st.download_button(
+                    label="⬇️ Download Report (.txt)",
+                    data=summary,
+                    file_name="AquaCortex_Report.txt",
+                    mime="text/plain"
+                )
+                st.markdown("✅ Report generated successfully.")
