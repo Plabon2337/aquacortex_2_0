@@ -55,34 +55,48 @@ if mode == "📊 Test Data Analysis":
         input_data[label] = [v1, v2, v3]
 
     if st.button("Analyze Water Quality"):
-        st.markdown("### 🌊 Water Quality Index (WQI)")
-        weights = {k: 1 / standards[k][1] for k in standards}
-        sum_wi_qi = 0
-        sum_wi = 0
 
-        for param, (ideal, std) in standards.items():
+        # --- WQI (Corrected) ---
+        st.markdown("### 🌊 Water Quality Index (WQI)")
+        ideal_values = {
+            "pH": 7.0, "BOD5": 0.0, "DO": 14.6, "COD": 0.0, "Turbidity": 0.0,
+            "TSS": 0.0, "NH3N": 0.0, "NO3": 0.0, "Temperature": 0.0, "Pb": 0.0, "As": 0.0
+        }
+        standard_values = {
+            "pH": 8.5, "BOD5": 3.0, "DO": 5.0, "COD": 10.0, "Turbidity": 5.0,
+            "TSS": 25.0, "NH3N": 0.5, "NO3": 10.0, "Temperature": 25.0, "Pb": 0.01, "As": 0.01
+        }
+        k = 1
+        total_wi_qi = 0
+        total_wi = 0
+
+        for param in standards:
             values = [float(v) for v in input_data[param] if v.strip()]
             if values:
                 vi = sum(values) / len(values)
-                v0 = ideal
-                si = std
-                qi = abs((vi - v0) / (si - v0)) * 100
-                wi = 1 / si
-                sum_wi_qi += wi * qi
-                sum_wi += wi
+                si = standard_values[param]
+                v_ideal = ideal_values[param]
+                wi = k / si
+                try:
+                    qi = abs((vi - v_ideal) / (si - v_ideal)) * 100
+                except ZeroDivisionError:
+                    qi = 0
+                total_wi_qi += wi * qi
+                total_wi += wi
 
-        if sum_wi > 0:
-            wqi = sum_wi_qi / sum_wi
+        if total_wi > 0:
+            wqi = total_wi_qi / total_wi
             wqi_status = (
                 "Excellent" if wqi <= 25 else
                 "Good" if wqi <= 50 else
                 "Poor" if wqi <= 75 else
                 "Very Poor" if wqi <= 100 else
-                "Unsuitable"
+                "Unsuitable for use"
             )
         else:
             wqi, wqi_status = None, "N/A"
 
+        # --- RPI ---
         def rpi_score(p, val):
             if p == "DO":
                 return 1 if val >= 6.5 else 3 if val >= 4.6 else 6 if val >= 2.1 else 8
@@ -112,7 +126,7 @@ if mode == "📊 Test Data Analysis":
         else:
             rpi, rpi_status = None, "N/A"
 
-        # AI Summary
+        # --- AI Analysis ---
         try:
             prompt = f"""You are an environmental expert. Analyze the following water test results for a {source_type} at {location}.
 Suggest:
@@ -131,7 +145,7 @@ Values:
         except Exception as e:
             ai_report = f"AI Error: {e}"
 
-        # Show results before printable block
+        # Show Results
         if wqi is not None:
             st.success(f"💧 Water Quality Index (WQI): {wqi:.2f} — {wqi_status}")
         else:
@@ -146,7 +160,7 @@ Values:
         st.markdown(ai_report, unsafe_allow_html=True)
 
         st.markdown("""
-> 💡 **To save the below report as PDF:** Press **Ctrl + P** (or **Cmd + P** on Mac) → Choose **Save as PDF** → Click **Print**.
+> 💡 **To save the report as PDF:** Press **Ctrl + P** (or **Cmd + P**) → Choose **Save as PDF** → Print.
 """)
 
         # Printable Report
@@ -165,7 +179,7 @@ Values:
 </div>
 """, unsafe_allow_html=True)
 
-# AI Chat Mode
+# --- AI Chat Mode ---
 elif mode == "💬 AI Water Chat":
     st.subheader("💬 Ask AquaCortex")
     question = st.text_input("Your question (only water/env/civil related)")
