@@ -6,10 +6,6 @@
 # Corrected WQI Calculation Section:
 st.markdown("### 🌊 Water Quality Index (WQI)")
 
-        k = 1.0  # Scaling constant for weights
-        total_weight = 0.0
-        weighted_qi_sum = 0.0
-
         for param in standards:
             values = [float(v) for v in input_data[param] if v.strip()]
             if values:
