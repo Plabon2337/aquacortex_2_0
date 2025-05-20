@@ -171,10 +171,10 @@ elif mode == "📊 Water Test Data Analysis":
             st.warning("⚠️ At least DO, BOD₅, TSS, and NH₃-N values are required to calculate RPI.")
 
         # AI-BASED REPORT
-        st.markdown("---")
-        st.subheader("🧠 AI-Based Report: Suitability + Treatment Suggestion")
+st.markdown("---")
+st.subheader("🧠 AI-Based Report: Suitability + Treatment Suggestion")
 
-        prompt = f"""
+prompt = f"""
 You are an expert environmental engineer. Analyze the following river water quality test results and provide a professional report that includes:
 1. Suitability of the water for uses like drinking, irrigation, recreation, or industrial use.
 2. Potential health or environmental risks.
@@ -186,20 +186,21 @@ Water test data:
 Use global standards like WHO and ECR. Be brief and professional.
 """
 
-        try:
-            response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "You are a helpful assistant that only answers water, environmental, and civil engineering-related questions."},
-                    {"role": "user", "content": prompt}
-                ]
-            )
 try:
-    response = client.chat.completions.create(...)
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant that only answers water, environmental, and civil engineering-related questions."},
+            {"role": "user", "content": prompt}
+        ]
+    )
     ai_text = response.choices[0].message.content
     st.markdown(ai_text)
+
 except Exception as e:
+    ai_text = None
     st.error(f"OpenAI API error: {e}")
+
 # ─────────────────────────────
 # Optional: Water Source Info + Print Summary
 # ─────────────────────────────
@@ -210,12 +211,11 @@ source_name = st.text_input("Water Source Name (e.g., Turag River)", key="src_na
 location = st.text_input("Location (e.g., Mirpur Bridge)", key="src_loc")
 description = st.text_area("Short Description", key="src_desc")
 
-# Ensure storage for printable report
 if "print_ready" not in st.session_state:
     st.session_state.print_ready = ""
 
-# Check that WQI, RPI, and AI analysis are available
-if 'wqi' in locals() and 'rpi' in locals() and 'ai_text' in locals():
+# Ensure WQI, RPI, and AI output exist before allowing print
+if 'wqi' in locals() and 'rpi' in locals() and ai_text:
     st.markdown("---")
     if st.button("📄 Generate Printable Summary"):
         summary = f"""
