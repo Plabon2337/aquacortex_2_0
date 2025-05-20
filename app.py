@@ -194,7 +194,13 @@ Use global standards like WHO and ECR. Be brief and professional.
                     {"role": "user", "content": prompt}
                 ]
             )
-            # ─────────────────────────────
+try:
+    response = client.chat.completions.create(...)
+    ai_text = response.choices[0].message.content
+    st.markdown(ai_text)
+except Exception as e:
+    st.error(f"OpenAI API error: {e}")
+# ─────────────────────────────
 # Optional: Water Source Info + Print Summary
 # ─────────────────────────────
 st.markdown("---")
@@ -204,34 +210,34 @@ source_name = st.text_input("Water Source Name (e.g., Turag River)", key="src_na
 location = st.text_input("Location (e.g., Mirpur Bridge)", key="src_loc")
 description = st.text_area("Short Description", key="src_desc")
 
-# Storage for generated print report
+# Ensure storage for printable report
 if "print_ready" not in st.session_state:
     st.session_state.print_ready = ""
 
-# Only generate print report if all main outputs are available
+# Check that WQI, RPI, and AI analysis are available
 if 'wqi' in locals() and 'rpi' in locals() and 'ai_text' in locals():
     st.markdown("---")
     if st.button("📄 Generate Printable Summary"):
         summary = f"""
 ### AquaCortex 2.0 — Water Quality Report
 
-**Water Source**: {source_name or "N/A"}
-**Location**: {location or "N/A"}
+**Water Source**: {source_name or "N/A"}  
+**Location**: {location or "N/A"}  
 
-**Short Description**:
-{description or "N/A"}
+**Short Description**:  
+{description or "N/A"}  
 
 ---
 
-**🌊 Water Quality Index (WQI)**: {wqi:.2f}
+**🌊 Water Quality Index (WQI)**: {wqi:.2f}  
 - Classification: {"Excellent" if wqi <= 25 else "Good" if wqi <= 50 else "Poor" if wqi <= 75 else "Very Poor" if wqi <= 100 else "Unsuitable"}
 
-**🧪 Pollution Index (RPI)**: {rpi:.2f}
+**🧪 Pollution Index (RPI)**: {rpi:.2f}  
 - Classification: {"Non/mildly polluted" if rpi <= 2 else "Lightly polluted" if rpi <= 3 else "Moderately polluted" if rpi <= 6 else "Severely polluted"}
 
 ---
 
-**🧠 AI Analysis Summary & Treatment Recommendation**:
+**🧠 AI Analysis Summary & Treatment Recommendation**:  
 {ai_text}
 """
         st.session_state.print_ready = summary
@@ -246,8 +252,3 @@ if 'wqi' in locals() and 'rpi' in locals() and 'ai_text' in locals():
             file_name="AquaCortex_Report.txt",
             mime="text/plain"
         )
-
-            ai_text = response.choices[0].message.content
-            st.markdown(ai_text)
-        except Exception as e:
-            st.error(f"OpenAI API error: {e}")
