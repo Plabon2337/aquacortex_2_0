@@ -171,6 +171,12 @@ elif mode == "📊 Water Test Data Analysis":
             st.warning("⚠️ At least DO, BOD₅, TSS, and NH₃-N values are required to calculate RPI.")
 
         # AI-BASED REPORT
+if st.button("Analyze Water Quality"):
+    # WQI code
+    # RPI code
+
+    # Now here: safe to use input_data
+    
 st.markdown("---")
 st.subheader("🧠 AI-Based Report: Suitability + Treatment Suggestion")
 
