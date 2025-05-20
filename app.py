@@ -39,7 +39,7 @@ if mode == "💬 AI-Assisted Chat":
             st.warning("❌ This assistant only responds to questions about water, environment, or civil engineering.")
 
 # ─────────────────────────────
-# Mode 2: Placeholder for Test Data Analysis (Next Step)
+# Mode 2: Water Test Data Analysis
 # ─────────────────────────────
 elif mode == "📊 Water Test Data Analysis":
     st.subheader("📊 Water Quality Index & Pollution Index Tool")
@@ -60,16 +60,6 @@ elif mode == "📊 Water Test Data Analysis":
     }
 
     input_data = {}
-        # Count how many parameters the user actually entered
-        total_inputs = sum(
-            1 for param in input_data.values()
-            for v in param if v.strip() != ""
-        )
-
-        st.info(f"✅ You provided {total_inputs} individual test values.")
-
-        if total_inputs < 3:
-            st.warning("⚠️ Very few parameters entered. WQI and RPI may not be reliable. Consider adding more data.")
 
     for label, key in test_parameters.items():
         col1, col2, col3 = st.columns(3)
@@ -82,7 +72,15 @@ elif mode == "📊 Water Test Data Analysis":
         input_data[key] = [val1, val2, val3]
 
     if st.button("Analyze Water Quality"):
-        # Reference limits (can be from WHO/ECR)
+        total_inputs = sum(
+            1 for param in input_data.values()
+            for v in param if v.strip() != ""
+        )
+        st.info(f"✅ You provided {total_inputs} individual test values.")
+        if total_inputs < 3:
+            st.warning("⚠️ Very few parameters entered. WQI and RPI may not be reliable. Consider adding more data.")
+
+        # WQI CALCULATION
         standards = {
             "pH": 7.0,
             "BOD5": 3,
@@ -98,7 +96,6 @@ elif mode == "📊 Water Test Data Analysis":
         }
 
         weights = {k: 1/v for k, v in standards.items()}
-
         q_values = []
         w_values = []
 
@@ -106,14 +103,13 @@ elif mode == "📊 Water Test Data Analysis":
             valid = [float(v) for v in samples if v.strip() != ""]
             if valid and param in standards:
                 avg = sum(valid) / len(valid)
-                q = (avg / standards[param]) * 100  # quality rating
+                q = (avg / standards[param]) * 100
                 q_values.append(q * weights[param])
                 w_values.append(weights[param])
 
         if len(q_values) >= 3:
             wqi = sum(q_values) / sum(w_values)
             st.success(f"🌊 **Water Quality Index (WQI): {wqi:.2f}**")
-
             if wqi <= 25:
                 st.markdown("✅ Status: **Excellent**")
             elif wqi <= 50:
@@ -126,7 +122,8 @@ elif mode == "📊 Water Test Data Analysis":
                 st.markdown("🚨 Status: **Unsuitable for use**")
         else:
             st.warning("⚠️ Not enough valid data to calculate WQI. Please enter at least 3 key parameters.")
-        # RPI scoring logic
+
+        # RPI CALCULATION
         def get_rpi_score(param, value):
             if param == "DO":
                 if value >= 6.5: return 1
@@ -150,12 +147,7 @@ elif mode == "📊 Water Test Data Analysis":
                 else: return 8
             return None
 
-        # Compute RPI only if all 4 required parameters are present
         rpi_scores = []
-        rpi_params = {"DO": "Dissolved Oxygen (DO)", "BOD5": "Biochemical Oxygen Demand (BOD₅)",
-                      "TSS": "Total Suspended Solids", "NH3N": "Ammonia Nitrogen"}
-
-        rpi_missing = []
         for key in ["DO", "BOD5", "TSS", "NH3N"]:
             samples = input_data.get(key, [])
             valid = [float(v) for v in samples if v.strip() != ""]
@@ -163,13 +155,10 @@ elif mode == "📊 Water Test Data Analysis":
                 avg = sum(valid) / len(valid)
                 score = get_rpi_score(key, avg)
                 rpi_scores.append(score)
-            else:
-                rpi_missing.append(key)
 
         if len(rpi_scores) == 4:
             rpi = sum(rpi_scores) / 4
             st.success(f"🧪 **Pollution Index (RPI): {rpi:.2f}**")
-
             if rpi <= 2:
                 st.markdown("✅ Pollution Level: **Non/mildly polluted**")
             elif rpi <= 3:
@@ -180,6 +169,8 @@ elif mode == "📊 Water Test Data Analysis":
                 st.markdown("🚨 Pollution Level: **Severely polluted**")
         else:
             st.warning("⚠️ At least DO, BOD₅, TSS, and NH₃-N values are required to calculate RPI.")
+
+        # AI-BASED REPORT
         st.markdown("---")
         st.subheader("🧠 AI-Based Report: Suitability + Treatment Suggestion")
 
@@ -207,5 +198,3 @@ Use global standards like WHO and ECR. Be brief and professional.
             st.markdown(ai_text)
         except Exception as e:
             st.error(f"OpenAI API error: {e}")
-
-
