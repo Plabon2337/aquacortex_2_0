@@ -135,18 +135,15 @@ elif mode == "📊 Water Test Data Analysis":
         st.markdown("---")
         st.subheader("🧠 AI-Based Report")
 
-        prompt = (
-            "You are an expert environmental engineer. Analyze the following river water quality test results "
-            "and provide:
+        prompt = f"""
+You are an expert environmental engineer. Analyze the following river water quality test results and provide:
 1. Suitability for use (drinking, irrigation, recreation, etc.)
-"
-            "2. Health/environmental risks
+2. Health/environmental risks
 3. Simple treatment methods.
 
-"
-            f"Test data:
-{input_data}"
-        )
+Test data:
+{input_data}
+"""
 
         try:
             response = client.chat.completions.create(
@@ -171,17 +168,25 @@ elif mode == "📊 Water Test Data Analysis":
 
         if wqi and rpi and ai_text:
             if st.button("📄 Generate Printable Summary"):
-                summary = (
-                    f"### AquaCortex 2.0 — Water Quality Report\n\n"
-                    f"**Water Source**: {source_name or 'N/A'}\n"
-                    f"**Location**: {location or 'N/A'}\n\n"
-                    f"**Short Description**:\n{description or 'N/A'}\n\n"
-                    f"---\n"
-                    f"**🌊 WQI**: {wqi:.2f}  |  Status: {wqi_status}\n"
-                    f"**🧪 RPI**: {rpi:.2f}  |  Status: {rpi_status}\n\n"
-                    f"---\n"
-                    f"**🧠 AI Summary & Treatment Suggestion**:\n{ai_text}"
-                )
+                summary = f"""
+### AquaCortex 2.0 — Water Quality Report
+
+**Water Source**: {source_name or 'N/A'}
+**Location**: {location or 'N/A'}
+
+**Short Description**:
+{description or 'N/A'}
+
+---
+
+**🌊 WQI**: {wqi:.2f}  |  Status: {wqi_status}
+**🧪 RPI**: {rpi:.2f}  |  Status: {rpi_status}
+
+---
+
+**🧠 AI Summary & Treatment Suggestion**:
+{ai_text}
+"""
                 st.download_button(
                     label="⬇️ Download Report (.txt)",
                     data=summary,
