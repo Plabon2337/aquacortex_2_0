@@ -3,20 +3,16 @@ import os
 from openai import OpenAI
 import requests
 from fpdf import FPDF
-import matplotlib.pyplot as plt
 import tempfile
 
-# Page setup
 st.set_page_config(page_title="AquaCortex 2.0", page_icon="🌊", layout="wide")
 st.title("💧 AquaCortex 2.0: Water Intelligence Platform")
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
 
-# Sidebar mode
 mode = st.sidebar.radio("Choose Mode", ["📊 Test Data Analysis", "💬 AI Water Chat"])
 
-# Source Info
 st.markdown("### 📝 Water Source Information")
 col1, col2 = st.columns(2)
 with col1:
@@ -26,7 +22,6 @@ with col2:
 source_type = st.selectbox("💧 Type of Source", ["River", "Canal", "Lake", "Pond", "Ground Aquifer", "Tap", "Sewage Line", "Others"])
 description = st.text_area("📝 Description", height=80)
 
-# GPS Coordinates
 gps_coords = "Not Available"
 if location and GOOGLE_MAPS_API_KEY:
     try:
@@ -108,7 +103,6 @@ elif mode == "📊 Test Data Analysis":
             wqi = None
             wqi_status = "N/A"
 
-        # RPI
         def rpi_score(p, val):
             if p == "DO":
                 return 1 if val >= 6.5 else 3 if val >= 4.6 else 6 if val >= 2.1 else 8
@@ -139,7 +133,6 @@ elif mode == "📊 Test Data Analysis":
             rpi = None
             rpi_status = "N/A"
 
-        # AI Report
         st.subheader("🧠 AI Summary")
         try:
             prompt = f"""You are an environmental expert. Analyze the following water test results for a {source_type} at {location}.
@@ -158,10 +151,9 @@ Values:
             ai_report = response.choices[0].message.content
             st.markdown(ai_report)
         except Exception as e:
-            ai_report = "API ERROR"
+            ai_report = f"AI Error: {e}"
             st.error(ai_report)
 
-        # PDF Report
         st.subheader("📄 Download PDF Report")
         if st.button("📥 Generate PDF"):
             pdf = FPDF()
@@ -170,21 +162,21 @@ Values:
             pdf.cell(200, 10, "AquaCortex 2.0 - Water Report", ln=True, align="C")
 
             pdf.set_font("Arial", "", 12)
-            pdf.multi_cell(0, 10, f"Source: {source_name}
+            pdf.multi_cell(0, 10, f"""Source: {source_name}
 Location: {location}
 GPS: {gps_coords}
 Type: {source_type}
-Description: {description}")
-            pdf.ln()
+Description: {description}""")
 
+            pdf.ln(5)
             pdf.set_font("Arial", "B", 12)
             pdf.cell(0, 10, f"WQI: {wqi:.2f} ({wqi_status})", ln=True)
             pdf.cell(0, 10, f"RPI: {rpi:.2f} ({rpi_status})", ln=True)
-            pdf.ln()
+
             pdf.set_font("Arial", "", 11)
             pdf.multi_cell(0, 10, ai_report)
 
             with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
                 pdf.output(tmp_file.name)
                 with open(tmp_file.name, "rb") as f:
-                    st.download_button("📎 Download PDF", data=f, file_name="AquaCortex_Report.pdf", mime="application/pdf")
+                    st.download_button("⬇️ Download PDF", data=f, file_name="AquaCortex_Report.pdf", mime="application/pdf")
