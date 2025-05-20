@@ -2,7 +2,6 @@ import streamlit as st
 import os
 from openai import OpenAI
 import requests
-from fpdf import FPDF
 import tempfile
 
 st.set_page_config(page_title="AquaCortex 2.0", page_icon="🌊", layout="wide")
