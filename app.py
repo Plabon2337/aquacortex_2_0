@@ -37,7 +37,8 @@ if mode == "📊 Test Data Analysis":
     st.subheader("📊 Enter Test Data")
     standards = {
         "pH": (7.0, 8.5), "BOD5": (0, 3), "DO": (14.6, 5), "COD": (0, 10), "Turbidity": (0, 5),
-        "TSS": (0, 25), "NH3N": (0, 0.5), "NO3": (0, 10), "Temperature": (0, 25), "Pb": (0, 0.01), "As": (0, 0.01)
+        "TSS": (0, 25), "NH3N": (0, 0.5), "NO3": (0, 10), "Temperature": (0, 25),
+        "Pb": (0, 0.01), "As": (0, 0.01)
     }
 
     input_data = {}
@@ -72,8 +73,11 @@ if mode == "📊 Test Data Analysis":
         if sum_wi > 0:
             wqi = sum_wi_qi / sum_wi
             wqi_status = (
-                "Excellent" if wqi <= 25 else "Good" if wqi <= 50 else
-                "Poor" if wqi <= 75 else "Very Poor" if wqi <= 100 else "Unsuitable"
+                "Excellent" if wqi <= 25 else
+                "Good" if wqi <= 50 else
+                "Poor" if wqi <= 75 else
+                "Very Poor" if wqi <= 100 else
+                "Unsuitable"
             )
         else:
             wqi, wqi_status = None, "N/A"
@@ -99,14 +103,17 @@ if mode == "📊 Test Data Analysis":
         if len(rpi_vals) == 4:
             rpi = sum(rpi_vals) / 4
             rpi_status = (
-                "Non/mildly polluted" if rpi <= 2 else "Lightly polluted" if rpi <= 3 else
-                "Moderately polluted" if rpi <= 6 else "Severely polluted"
+                "Non/mildly polluted" if rpi <= 2 else
+                "Lightly polluted" if rpi <= 3 else
+                "Moderately polluted" if rpi <= 6 else
+                "Severely polluted"
             )
         else:
             rpi, rpi_status = None, "N/A"
 
+        # AI Summary
         try:
-            prompt = f\"\"\"You are an environmental expert. Analyze the following water test results for a {source_type} at {location}.
+            prompt = f"""You are an environmental expert. Analyze the following water test results for a {source_type} at {location}.
 Suggest:
 1. Suitability (drinking, irrigation, recreation, etc.)
 2. Risks involved
@@ -114,15 +121,16 @@ Suggest:
 
 Values:
 {input_data}
-\"\"\"
+"""
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[{"role": "user", "content": prompt}]
             )
-            ai_report = response.choices[0].message.content.replace("\\n", "<br>")
+            ai_report = response.choices[0].message.content.replace("\n", "<br>")
         except Exception as e:
             ai_report = f"AI Error: {e}"
 
+        # Display printable report
         st.subheader("📄 Printable Report")
         st.markdown(f"""
 <div style='padding:15px; border:2px solid #ccc; border-radius:10px; background:#f9f9f9; font-family:Arial'>
@@ -141,6 +149,7 @@ Values:
 <button onclick="window.print()">🖨️ Print to PDF</button>
 """, unsafe_allow_html=True)
 
+# Chat Mode
 elif mode == "💬 AI Water Chat":
     st.subheader("💬 Ask AquaCortex")
     question = st.text_input("Your question (only water/env/civil related)")
