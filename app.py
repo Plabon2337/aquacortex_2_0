@@ -58,11 +58,11 @@ if mode == "📊 Test Data Analysis":
         st.markdown("### 🌊 Water Quality Index (WQI)")
         ideal_values = {
             "pH": 7.0, "BOD5": 0.0, "DO": 14.6, "COD": 0.0, "Turbidity": 0.0,
-            "TSS": 0.0, "NH3N": 0.0, "NO3": 0.0, "Temperature": 0.0, "Pb": 0.0, "As": 0.0
+            "TSS": 0.0, "NH3N": 0.0, "NO3": 0.0
         }
         standard_values = {
             "pH": 8.5, "BOD5": 3.0, "DO": 5.0, "COD": 10.0, "Turbidity": 5.0,
-            "TSS": 25.0, "NH3N": 0.5, "NO3": 10.0, "Temperature": 25.0, "Pb": 0.01, "As": 0.01
+            "TSS": 25.0, "NH3N": 0.5, "NO3": 10.0
         }
         k = 1.0
         total_weight = 0.0
