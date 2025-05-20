@@ -11,6 +11,7 @@ GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
 
 mode = st.sidebar.radio("Choose Mode", ["📊 Test Data Analysis", "💬 AI Water Chat"])
 
+# Source Info
 st.markdown("### 📝 Water Source Information")
 col1, col2 = st.columns(2)
 with col1:
@@ -130,7 +131,7 @@ Values:
         except Exception as e:
             ai_report = f"AI Error: {e}"
 
-        # Display printable report
+        # HTML-based printable report
         st.subheader("📄 Printable Report")
         st.markdown(f"""
 <div style='padding:15px; border:2px solid #ccc; border-radius:10px; background:#f9f9f9; font-family:Arial'>
@@ -140,8 +141,8 @@ Values:
 <b>GPS:</b> {gps_coords}<br>
 <b>Source Type:</b> {source_type}<br>
 <b>Description:</b> {description}<br><hr>
-<b>WQI:</b> {wqi:.2f if wqi else "N/A"} — <i>{wqi_status}</i><br>
-<b>RPI:</b> {rpi:.2f if rpi else "N/A"} — <i>{rpi_status}</i><hr>
+<b>WQI:</b> {f"{wqi:.2f}" if wqi is not None else "N/A"} — <i>{wqi_status}</i><br>
+<b>RPI:</b> {f"{rpi:.2f}" if rpi is not None else "N/A"} — <i>{rpi_status}</i><hr>
 <h4>AI-Based Summary & Recommendation:</h4>
 <div>{ai_report}</div>
 </div>
@@ -149,7 +150,7 @@ Values:
 <button onclick="window.print()">🖨️ Print to PDF</button>
 """, unsafe_allow_html=True)
 
-# Chat Mode
+# AI Chat Mode
 elif mode == "💬 AI Water Chat":
     st.subheader("💬 Ask AquaCortex")
     question = st.text_input("Your question (only water/env/civil related)")
