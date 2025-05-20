@@ -2,9 +2,6 @@ import streamlit as st
 import os
 from openai import OpenAI
 import requests
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-import tempfile
 
 st.set_page_config(page_title="AquaCortex 2.0", page_icon="🌊", layout="wide")
 st.title("💧 AquaCortex 2.0: Water Intelligence Platform")
@@ -36,26 +33,7 @@ if location and GOOGLE_MAPS_API_KEY:
     except:
         st.warning("❌ Unable to fetch GPS coordinates.")
 
-if mode == "💬 AI Water Chat":
-    st.subheader("💬 Ask AquaCortex")
-    question = st.text_input("Your question (only water/env/civil related)")
-    if st.button("Ask"):
-        if question.strip():
-            try:
-                response = client.chat.completions.create(
-                    model="gpt-3.5-turbo",
-                    messages=[
-                        {"role": "system", "content": "You are a water/environment/civil engineering expert."},
-                        {"role": "user", "content": question}
-                    ]
-                )
-                st.markdown(response.choices[0].message.content)
-            except Exception as e:
-                st.error(f"API Error: {e}")
-        else:
-            st.warning("❗ Please type your question.")
-
-elif mode == "📊 Test Data Analysis":
+if mode == "📊 Test Data Analysis":
     st.subheader("📊 Enter Test Data")
     standards = {
         "pH": (7.0, 8.5), "BOD5": (0, 3), "DO": (14.6, 5), "COD": (0, 10), "Turbidity": (0, 5),
@@ -93,16 +71,12 @@ elif mode == "📊 Test Data Analysis":
 
         if sum_wi > 0:
             wqi = sum_wi_qi / sum_wi
-            st.success(f"WQI (Weighted Arithmetic): {wqi:.2f}")
             wqi_status = (
                 "Excellent" if wqi <= 25 else "Good" if wqi <= 50 else
                 "Poor" if wqi <= 75 else "Very Poor" if wqi <= 100 else "Unsuitable"
             )
-            st.markdown(f"**Status**: {wqi_status}")
         else:
-            st.warning("Not enough data for WQI.")
-            wqi = None
-            wqi_status = "N/A"
+            wqi, wqi_status = None, "N/A"
 
         def rpi_score(p, val):
             if p == "DO":
@@ -124,19 +98,15 @@ elif mode == "📊 Test Data Analysis":
 
         if len(rpi_vals) == 4:
             rpi = sum(rpi_vals) / 4
-            st.success(f"🧪 River Pollution Index (RPI): {rpi:.2f}")
             rpi_status = (
                 "Non/mildly polluted" if rpi <= 2 else "Lightly polluted" if rpi <= 3 else
                 "Moderately polluted" if rpi <= 6 else "Severely polluted"
             )
-            st.markdown(f"**Pollution Status**: {rpi_status}")
         else:
-            rpi = None
-            rpi_status = "N/A"
+            rpi, rpi_status = None, "N/A"
 
-        st.subheader("🧠 AI Summary")
         try:
-            prompt = f"""You are an environmental expert. Analyze the following water test results for a {source_type} at {location}.
+            prompt = f\"\"\"You are an environmental expert. Analyze the following water test results for a {source_type} at {location}.
 Suggest:
 1. Suitability (drinking, irrigation, recreation, etc.)
 2. Risks involved
@@ -144,48 +114,48 @@ Suggest:
 
 Values:
 {input_data}
-"""
+\"\"\"
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[{"role": "user", "content": prompt}]
             )
-            ai_report = response.choices[0].message.content
-            st.markdown(ai_report)
+            ai_report = response.choices[0].message.content.replace("\\n", "<br>")
         except Exception as e:
             ai_report = f"AI Error: {e}"
-            st.error(ai_report)
 
-        st.subheader("📄 Download PDF Report")
-        if st.button("📥 Generate PDF"):
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
-                c = canvas.Canvas(tmp_file.name, pagesize=letter)
-                c.setFont("Helvetica-Bold", 16)
-                c.drawString(50, 770, "AquaCortex 2.0 — Water Quality Report")
+        st.subheader("📄 Printable Report")
+        st.markdown(f"""
+<div style='padding:15px; border:2px solid #ccc; border-radius:10px; background:#f9f9f9; font-family:Arial'>
+<h2>AquaCortex 2.0 – Water Quality Report</h2>
+<b>Water Source:</b> {source_name}<br>
+<b>Location:</b> {location}<br>
+<b>GPS:</b> {gps_coords}<br>
+<b>Source Type:</b> {source_type}<br>
+<b>Description:</b> {description}<br><hr>
+<b>WQI:</b> {wqi:.2f if wqi else "N/A"} — <i>{wqi_status}</i><br>
+<b>RPI:</b> {rpi:.2f if rpi else "N/A"} — <i>{rpi_status}</i><hr>
+<h4>AI-Based Summary & Recommendation:</h4>
+<div>{ai_report}</div>
+</div>
+<br>
+<button onclick="window.print()">🖨️ Print to PDF</button>
+""", unsafe_allow_html=True)
 
-                c.setFont("Helvetica", 10)
-                y = 740
-                lines = [
-                    f"Source: {source_name}",
-                    f"Location: {location}",
-                    f"GPS: {gps_coords}",
-                    f"Type: {source_type}",
-                    f"Description: {description}",
-                    f"WQI: {wqi:.2f} ({wqi_status})",
-                    f"RPI: {rpi:.2f} ({rpi_status})",
-                    "",
-                    "AI Report Summary:"
-                ]
-                for line in lines:
-                    c.drawString(50, y, line)
-                    y -= 15
-
-                for part in ai_report.split("\n"):
-                    c.drawString(60, y, part)
-                    y -= 15
-                    if y < 50:
-                        c.showPage()
-                        y = 750
-
-                c.save()
-                with open(tmp_file.name, "rb") as f:
-                    st.download_button("⬇️ Download PDF", data=f, file_name="AquaCortex_Report.pdf", mime="application/pdf")
+elif mode == "💬 AI Water Chat":
+    st.subheader("💬 Ask AquaCortex")
+    question = st.text_input("Your question (only water/env/civil related)")
+    if st.button("Ask"):
+        if question.strip():
+            try:
+                response = client.chat.completions.create(
+                    model="gpt-3.5-turbo",
+                    messages=[
+                        {"role": "system", "content": "You are a water/environment/civil engineering expert."},
+                        {"role": "user", "content": question}
+                    ]
+                )
+                st.markdown(response.choices[0].message.content)
+            except Exception as e:
+                st.error(f"API Error: {e}")
+        else:
+            st.warning("❗ Please type your question.")
