@@ -2,6 +2,8 @@ import streamlit as st
 import os
 from openai import OpenAI
 import requests
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
 import tempfile
 
 st.set_page_config(page_title="AquaCortex 2.0", page_icon="🌊", layout="wide")
@@ -155,27 +157,35 @@ Values:
 
         st.subheader("📄 Download PDF Report")
         if st.button("📥 Generate PDF"):
-            pdf = FPDF()
-            pdf.add_page()
-            pdf.set_font("Arial", "B", 16)
-            pdf.cell(200, 10, "AquaCortex 2.0 - Water Report", ln=True, align="C")
-
-            pdf.set_font("Arial", "", 12)
-            pdf.multi_cell(0, 10, f"""Source: {source_name}
-Location: {location}
-GPS: {gps_coords}
-Type: {source_type}
-Description: {description}""")
-
-            pdf.ln(5)
-            pdf.set_font("Arial", "B", 12)
-            pdf.cell(0, 10, f"WQI: {wqi:.2f} ({wqi_status})", ln=True)
-            pdf.cell(0, 10, f"RPI: {rpi:.2f} ({rpi_status})", ln=True)
-
-            pdf.set_font("Arial", "", 11)
-            pdf.multi_cell(0, 10, ai_report)
-
             with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
-                pdf.output(tmp_file.name)
+                c = canvas.Canvas(tmp_file.name, pagesize=letter)
+                c.setFont("Helvetica-Bold", 16)
+                c.drawString(50, 770, "AquaCortex 2.0 — Water Quality Report")
+
+                c.setFont("Helvetica", 10)
+                y = 740
+                lines = [
+                    f"Source: {source_name}",
+                    f"Location: {location}",
+                    f"GPS: {gps_coords}",
+                    f"Type: {source_type}",
+                    f"Description: {description}",
+                    f"WQI: {wqi:.2f} ({wqi_status})",
+                    f"RPI: {rpi:.2f} ({rpi_status})",
+                    "",
+                    "AI Report Summary:"
+                ]
+                for line in lines:
+                    c.drawString(50, y, line)
+                    y -= 15
+
+                for part in ai_report.split("\n"):
+                    c.drawString(60, y, part)
+                    y -= 15
+                    if y < 50:
+                        c.showPage()
+                        y = 750
+
+                c.save()
                 with open(tmp_file.name, "rb") as f:
                     st.download_button("⬇️ Download PDF", data=f, file_name="AquaCortex_Report.pdf", mime="application/pdf")
