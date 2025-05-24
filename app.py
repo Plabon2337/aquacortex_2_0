@@ -3,15 +3,18 @@ import os
 import requests
 from openai import OpenAI
 
+# --- Page Setup ---
 st.set_page_config(page_title="AquaCortex 2.1", page_icon="💧", layout="wide")
 st.title("💧 AquaCortex 2.1: Water Intelligence Platform")
 
+# --- API Setup ---
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
 
+# --- Mode Selection ---
 mode = st.sidebar.radio("Choose Mode", ["📊 Test Data Analysis", "💬 AI Water Chat"])
 
-# Water Source
+# --- Water Source Information ---
 st.markdown("### 📝 Water Source Information")
 col1, col2 = st.columns(2)
 with col1:
@@ -21,7 +24,7 @@ with col2:
 source_type = st.selectbox("💧 Type of Source", ["River", "Canal", "Lake", "Pond", "Ground Aquifer", "Tap", "Sewage Line", "Others"])
 description = st.text_area("📝 Description (optional)", height=80)
 
-# GPS
+# --- GPS Coordinates ---
 gps_coords = "Not Available"
 if location and GOOGLE_MAPS_API_KEY:
     try:
@@ -35,8 +38,10 @@ if location and GOOGLE_MAPS_API_KEY:
     except:
         st.warning("❌ Could not fetch GPS coordinates.")
 
+# --- Test Data Analysis Mode ---
 if mode == "📊 Test Data Analysis":
-    st.subheader("📊 Enter Test Data")
+    st.subheader("📊 Enter Test Parameters (max 3 samples each)")
+
     parameters = {
         "pH": "–", "Temperature": "°C", "DO": "mg/L", "BOD₅": "mg/L", "COD": "mg/L",
         "TSS": "mg/L", "Turbidity": "NTU", "NH₃–N": "mg/L", "NO₃⁻": "mg/L",
@@ -48,21 +53,21 @@ if mode == "📊 Test Data Analysis":
     for param, unit in parameters.items():
         st.markdown(f"**{param} [{unit}]**")
         c1, c2, c3 = st.columns(3)
-        values = []
+        inputs = []
         for i, c in enumerate([c1, c2, c3]):
             with c:
                 val = st.text_input(f"Sample {i+1}", key=f"{param}_{i}")
-                values.append(val)
-        input_data[param] = values
+                inputs.append(val)
+        input_data[param] = inputs
 
     if st.button("Analyze Water Quality"):
         st.subheader("🔍 Results")
 
-        # ---- BWQI ----
+        # --- BWQI Calculation ---
         st.markdown("#### 💧 Basic Water Quality Index (BWQI)")
         try:
             bwqi_params = {
-                "DO": {"ideal": 5.0, "standard": 5.0, "type": "positive"},
+                "DO": {"ideal": 0.0, "standard": 5.0, "type": "positive"},
                 "BOD₅": {"ideal": 0.0, "standard": 3.0, "type": "negative"},
                 "COD": {"ideal": 0.0, "standard": 10.0, "type": "negative"}
             }
@@ -77,7 +82,7 @@ if mode == "📊 Test Data Analysis":
                     S = limits["standard"]
                     I = limits["ideal"]
                     if S == I:
-                        continue
+                        continue  # avoid division by zero
                     wi = 1 / S
                     if limits["type"] == "positive":
                         qi = ((S - avg) / (S - I)) * 100
@@ -102,7 +107,7 @@ if mode == "📊 Test Data Analysis":
         except Exception as e:
             st.error(f"BWQI Error: {e}")
 
-        # ---- RPI ----
+        # --- RPI Calculation ---
         st.markdown("#### 🧪 River Pollution Index (RPI)")
         def rpi_score(p, v):
             if p == "DO":
@@ -136,8 +141,8 @@ if mode == "📊 Test Data Analysis":
         except Exception as e:
             st.error(f"RPI Error: {e}")
 
-        # ---- AI Analysis ----
-        st.markdown("#### 🧠 AI Analysis & Treatment Suggestion")
+        # --- AI Analysis ---
+        st.markdown("#### 🧠 AI Analysis & Treatment Suggestions")
         try:
             prompt = f"""
 You are a water/environmental engineer. Analyze the water test results below.
@@ -160,7 +165,7 @@ Provide:
         except Exception as e:
             st.error(f"AI Error: {e}")
 
-# ---- AI Chat Mode ----
+# --- Chat Mode ---
 elif mode == "💬 AI Water Chat":
     st.subheader("💬 Ask AquaCortex")
     if "chat_history" not in st.session_state:
