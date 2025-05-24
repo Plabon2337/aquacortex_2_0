@@ -38,10 +38,10 @@ if mode == "Test Data Analysis":
 
     st.markdown("### 🔢 Enter Sample Data (up to 3 samples per parameter)")
     parameters = {
-        "pH": "-", "Temperature (°C)": "°C", "DO (mg/L)": "mg/L", "BOD5 (mg/L)": "mg/L",
-        "COD (mg/L)": "mg/L", "TSS (mg/L)": "mg/L", "Turbidity (NTU)": "NTU", "NH3-N (mg/L)": "mg/L",
-        "NO3-N (mg/L)": "mg/L", "Total Coliform (CFU/100mL)": "CFU/100mL", "Fecal Coliform (CFU/100mL)": "CFU/100mL",
-        "Arsenic (As, mg/L)": "mg/L", "Lead (Pb, mg/L)": "mg/L", "Chromium (Cr, mg/L)": "mg/L"
+        "pH": "-", "Temperature": "°C", "DO": "mg/L", "BOD5": "mg/L",
+        "COD": "mg/L", "TSS": "mg/L", "Turbidity": "NTU", "NH3-N": "mg/L",
+        "NO3-N": "mg/L", "Total Coliform": "CFU/100mL", "Fecal Coliform": "CFU/100mL",
+        "Arsenic (As)": "mg/L", "Lead (Pb)": "mg/L", "Chromium (Cr)": "mg/L"
     }
     input_data = {}
     for param, unit in parameters.items():
