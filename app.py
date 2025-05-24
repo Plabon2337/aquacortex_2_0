@@ -62,49 +62,49 @@ if mode == "📊 Test Data Analysis":
         st.subheader("🔍 Results")
 
         # --- BWQI Calculation ---
-        st.markdown("#### 💧 Basic Water Quality Index (BWQI)")
-        try:
-            bwqi_params = {
-                "DO": {"ideal": 5.0, "standard": 5.0, "type": "positive"},
-                "BOD₅": {"ideal": 0.0, "standard": 3.0, "type": "negative"},
-                "COD": {"ideal": 0.0, "standard": 10.0, "type": "negative"}
-            }
+st.markdown("#### 💧 Basic Water Quality Index (BWQI)")
+try:
+    bwqi_params = {
+        "DO": {"ideal": 5.0, "standard": 5.0, "type": "positive"},
+        "BOD₅": {"ideal": 0.0, "standard": 3.0, "type": "negative"},
+        "COD": {"ideal": 0.0, "standard": 10.0, "type": "negative"}
+    }
 
-            sum_wi_qi = 0
-            sum_wi = 0
+    sum_wi_qi = 0
+    sum_wi = 0
 
-            for param, limits in bwqi_params.items():
-                values = input_data.get(param, [])
-                samples = [float(v) for v in values if v.strip()]
-                if samples:
-                    avg = sum(samples) / len(samples)
-                    S = limits["standard"]
-                    I = limits["ideal"]
-                    if S == I:
-                        continue
-                    wi = 1 / S
-                    if limits["type"] == "positive":
-                        qi = abs((S - avg) / (S - I)) * 100
-                    else:
-                        qi = abs((avg - I) / (S - I)) * 100
-                    qi = min(max(qi, 0), 100)
-                    sum_wi_qi += wi * qi
-                    sum_wi += wi
-
-            if sum_wi > 0:
-                bwqi = round(sum_wi_qi / sum_wi, 2)
-                bwqi_status = (
-                    "Excellent" if bwqi <= 25 else
-                    "Good" if bwqi <= 50 else
-                    "Poor" if bwqi <= 75 else
-                    "Very Poor" if bwqi <= 100 else
-                    "Unsuitable"
-                )
-                st.success(f"BWQI Score: {bwqi} — {bwqi_status}")
+    for param, limits in bwqi_params.items():
+        values = input_data.get(param, [])
+        samples = [float(v) for v in values if v.strip()]
+        if samples:
+            avg = sum(samples) / len(samples)
+            S = limits["standard"]
+            I = limits["ideal"]
+            if S == I:
+                continue  # skip to avoid zero division
+            wi = 1 / S
+            if limits["type"] == "positive":
+                qi = ((S - avg) / (S - I)) * 100
             else:
-                st.warning("Insufficient data for BWQI.")
-        except Exception as e:
-            st.error(f"BWQI Error: {e}")
+                qi = ((avg - I) / (S - I)) * 100
+            qi = max(0, min(qi, 100))  # Clamp between 0–100
+            sum_wi_qi += wi * qi
+            sum_wi += wi
+
+    if sum_wi > 0:
+        bwqi = round(sum_wi_qi / sum_wi, 2)
+        bwqi_status = (
+            "Excellent" if bwqi <= 25 else
+            "Good" if bwqi <= 50 else
+            "Poor" if bwqi <= 75 else
+            "Very Poor" if bwqi <= 100 else
+            "Unsuitable"
+        )
+        st.success(f"BWQI Score: {bwqi} — {bwqi_status}")
+    else:
+        st.warning("Insufficient data for BWQI.")
+except Exception as e:
+    st.error(f"BWQI Error: {e}")
 
         # --- RPI Calculation ---
         st.markdown("#### 🧪 River Pollution Index (RPI)")
