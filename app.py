@@ -3,7 +3,6 @@ import os
 import requests
 from openai import OpenAI
 
-# Page config
 st.set_page_config(page_title="AquaCortex 2.1", page_icon="💧", layout="wide")
 st.title("💧 AquaCortex 2.1: Water Intelligence Platform")
 
@@ -12,7 +11,7 @@ GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
 
 mode = st.sidebar.radio("Choose Mode", ["📊 Test Data Analysis", "💬 AI Water Chat"])
 
-# --- Water Source Input Section ---
+# Water Source
 st.markdown("### 📝 Water Source Information")
 col1, col2 = st.columns(2)
 with col1:
@@ -22,7 +21,7 @@ with col2:
 source_type = st.selectbox("💧 Type of Source", ["River", "Canal", "Lake", "Pond", "Ground Aquifer", "Tap", "Sewage Line", "Others"])
 description = st.text_area("📝 Description (optional)", height=80)
 
-# --- GPS Coordinates Fetch ---
+# GPS
 gps_coords = "Not Available"
 if location and GOOGLE_MAPS_API_KEY:
     try:
@@ -36,10 +35,8 @@ if location and GOOGLE_MAPS_API_KEY:
     except:
         st.warning("❌ Could not fetch GPS coordinates.")
 
-# --- Test Data Analysis Mode ---
 if mode == "📊 Test Data Analysis":
-    st.subheader("📊 Enter Test Parameters (max 3 samples each)")
-
+    st.subheader("📊 Enter Test Data")
     parameters = {
         "pH": "–", "Temperature": "°C", "DO": "mg/L", "BOD₅": "mg/L", "COD": "mg/L",
         "TSS": "mg/L", "Turbidity": "NTU", "NH₃–N": "mg/L", "NO₃⁻": "mg/L",
@@ -51,62 +48,61 @@ if mode == "📊 Test Data Analysis":
     for param, unit in parameters.items():
         st.markdown(f"**{param} [{unit}]**")
         c1, c2, c3 = st.columns(3)
-        inputs = []
+        values = []
         for i, c in enumerate([c1, c2, c3]):
             with c:
                 val = st.text_input(f"Sample {i+1}", key=f"{param}_{i}")
-                inputs.append(val)
-        input_data[param] = inputs
+                values.append(val)
+        input_data[param] = values
 
     if st.button("Analyze Water Quality"):
         st.subheader("🔍 Results")
 
-        # --- BWQI Calculation ---
-st.markdown("#### 💧 Basic Water Quality Index (BWQI)")
-try:
-    bwqi_params = {
-        "DO": {"ideal": 5.0, "standard": 5.0, "type": "positive"},
-        "BOD₅": {"ideal": 0.0, "standard": 3.0, "type": "negative"},
-        "COD": {"ideal": 0.0, "standard": 10.0, "type": "negative"}
-    }
+        # ---- BWQI ----
+        st.markdown("#### 💧 Basic Water Quality Index (BWQI)")
+        try:
+            bwqi_params = {
+                "DO": {"ideal": 5.0, "standard": 5.0, "type": "positive"},
+                "BOD₅": {"ideal": 0.0, "standard": 3.0, "type": "negative"},
+                "COD": {"ideal": 0.0, "standard": 10.0, "type": "negative"}
+            }
 
-    sum_wi_qi = 0
-    sum_wi = 0
+            sum_wi_qi = 0
+            sum_wi = 0
 
-    for param, limits in bwqi_params.items():
-        values = input_data.get(param, [])
-        samples = [float(v) for v in values if v.strip()]
-        if samples:
-            avg = sum(samples) / len(samples)
-            S = limits["standard"]
-            I = limits["ideal"]
-            if S == I:
-                continue  # skip to avoid zero division
-            wi = 1 / S
-            if limits["type"] == "positive":
-                qi = ((S - avg) / (S - I)) * 100
+            for param, limits in bwqi_params.items():
+                samples = [float(v) for v in input_data.get(param, []) if v.strip()]
+                if samples:
+                    avg = sum(samples) / len(samples)
+                    S = limits["standard"]
+                    I = limits["ideal"]
+                    if S == I:
+                        continue
+                    wi = 1 / S
+                    if limits["type"] == "positive":
+                        qi = ((S - avg) / (S - I)) * 100
+                    else:
+                        qi = ((avg - I) / (S - I)) * 100
+                    qi = max(0, min(qi, 100))
+                    sum_wi_qi += wi * qi
+                    sum_wi += wi
+
+            if sum_wi > 0:
+                bwqi = round(sum_wi_qi / sum_wi, 2)
+                bwqi_status = (
+                    "Excellent" if bwqi <= 25 else
+                    "Good" if bwqi <= 50 else
+                    "Poor" if bwqi <= 75 else
+                    "Very Poor" if bwqi <= 100 else
+                    "Unsuitable"
+                )
+                st.success(f"BWQI Score: {bwqi} — {bwqi_status}")
             else:
-                qi = ((avg - I) / (S - I)) * 100
-            qi = max(0, min(qi, 100))  # Clamp between 0–100
-            sum_wi_qi += wi * qi
-            sum_wi += wi
+                st.warning("Insufficient data for BWQI.")
+        except Exception as e:
+            st.error(f"BWQI Error: {e}")
 
-    if sum_wi > 0:
-        bwqi = round(sum_wi_qi / sum_wi, 2)
-        bwqi_status = (
-            "Excellent" if bwqi <= 25 else
-            "Good" if bwqi <= 50 else
-            "Poor" if bwqi <= 75 else
-            "Very Poor" if bwqi <= 100 else
-            "Unsuitable"
-        )
-        st.success(f"BWQI Score: {bwqi} — {bwqi_status}")
-    else:
-        st.warning("Insufficient data for BWQI.")
-except Exception as e:
-    st.error(f"BWQI Error: {e}")
-
-        # --- RPI Calculation ---
+        # ---- RPI ----
         st.markdown("#### 🧪 River Pollution Index (RPI)")
         def rpi_score(p, v):
             if p == "DO":
@@ -124,8 +120,7 @@ except Exception as e:
                 samples = [float(v) for v in input_data.get(key, []) if v.strip()]
                 if samples:
                     avg = sum(samples) / len(samples)
-                    score = rpi_score(key, avg)
-                    rpi_vals.append(score)
+                    rpi_vals.append(rpi_score(key, avg))
 
             if len(rpi_vals) == 4:
                 rpi = round(sum(rpi_vals) / 4, 2)
@@ -137,24 +132,25 @@ except Exception as e:
                 )
                 st.success(f"RPI Score: {rpi} — {rpi_status}")
             else:
-                st.warning("RPI could not be calculated. All 4 inputs required.")
+                st.warning("RPI could not be calculated. All 4 parameters required.")
         except Exception as e:
             st.error(f"RPI Error: {e}")
 
-        # --- AI Summary Report ---
-        st.markdown("#### 🧠 AI Analysis & Treatment Recommendations")
+        # ---- AI Analysis ----
+        st.markdown("#### 🧠 AI Analysis & Treatment Suggestion")
         try:
             prompt = f"""
-You are an environmental water expert. Analyze the following test data from a {source_type} at {location}:
+You are a water/environmental engineer. Analyze the water test results below.
 
-Test Results: {input_data}
+Source Type: {source_type}
+Location: {location}
+GPS: {gps_coords}
+Parameters: {input_data}
+
 Provide:
-1. Suitability (drinking, recreation, agriculture, aquatic life)
-2. Potential health/environmental risks
-3. Suggested treatments (basic and advanced)
-
-Water Source: {source_name or "N/A"}
-Coordinates: {gps_coords}
+1. Suitability for drinking, irrigation, recreation, aquatic life
+2. Health/environmental risks
+3. Suggested treatments (basic + advanced)
 """
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
@@ -164,27 +160,26 @@ Coordinates: {gps_coords}
         except Exception as e:
             st.error(f"AI Error: {e}")
 
-# --- AI Chat Mode ---
+# ---- AI Chat Mode ----
 elif mode == "💬 AI Water Chat":
     st.subheader("💬 Ask AquaCortex")
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
 
-    question = st.text_input("Ask your question (related to water/env/civil):")
-    if st.button("Send") and question.strip():
-        st.session_state.chat_history.append({"role": "user", "content": question})
+    user_q = st.text_input("Ask your question:")
+    if st.button("Send") and user_q.strip():
+        st.session_state.chat_history.append({"role": "user", "content": user_q})
         try:
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "You are a helpful assistant specializing in water quality and civil/environmental engineering."}
-                ] + st.session_state.chat_history
+                messages=[{"role": "system", "content": "You are a civil/environmental/water expert."}] +
+                         st.session_state.chat_history
             )
             reply = response.choices[0].message.content
             st.session_state.chat_history.append({"role": "assistant", "content": reply})
         except Exception as e:
             st.error(f"Chat Error: {e}")
 
-    for chat in st.session_state.chat_history:
-        icon = "👤" if chat["role"] == "user" else "🤖"
-        st.markdown(f"**{icon}:** {chat['content']}")
+    for msg in st.session_state.chat_history:
+        icon = "👤" if msg["role"] == "user" else "🤖"
+        st.markdown(f"**{icon}**: {msg['content']}")
