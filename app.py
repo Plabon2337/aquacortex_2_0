@@ -41,8 +41,8 @@ standards = {
     "pH": ("-", "-"),
     "Temperature": ("-", "-"),
     "DO": (6.0, 5.0),
-    "BOD5": (0.2, 3.0),
-    "COD": (4.0, 10.0),
+    "BOD5": (0.0, 3.0),
+    "COD": (0.0, 10.0),
     "TSS": (0.0, 25.0),
     "Turbidity": (0.0, 5.0),
     "NH3N": (0.0, 0.5),
@@ -78,7 +78,7 @@ if mode == "📊 Test Data Analysis":
     if st.button("Analyze Water Quality"):
         st.markdown("#### 💧 Basic Water Quality Index (BWQI)")
 
-        ideal_vals = {"DO": 6.0, "BOD5": 0.2, "COD": 4.0}
+        ideal_vals = {"DO": 6.0, "BOD5": 0.0, "COD": 0.0}
         standard_vals = {"DO": 5.0, "BOD5": 3.0, "COD": 10.0}
         weights = {param: 1 / standard for param, standard in standard_vals.items()}
 
@@ -90,9 +90,11 @@ if mode == "📊 Test Data Analysis":
                 si = standard_vals[param]
                 ii = ideal_vals[param]
                 wi = weights[param]
-                qi = abs((vi - si) / (si - ii)) * 100
+                if si != ii:
+                    qi = abs((vi - ii) / (si - ii)) * 100
+                else:
+                    qi = 0
                 bwqi += qi * wi
-
 
         if bwqi <= 25:
             wqi_status = "Excellent"
