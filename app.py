@@ -4,8 +4,8 @@ from openai import OpenAI
 import requests
 
 # --------------------- Page Setup ---------------------
-st.set_page_config(page_title="AquaCortex 2.0", page_icon="🌊", layout="wide")
-st.title("💧 AquaCortex 2.0: Water Intelligence Platform")
+st.set_page_config(page_title="AquaCortex 2.1", page_icon="🌊", layout="wide")
+st.title("💧 AquaCortex 2.1: Water Intelligence Platform")
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
