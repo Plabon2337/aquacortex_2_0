@@ -4,8 +4,8 @@ from openai import OpenAI
 import requests
 
 # --------------------- Page Setup ---------------------
-st.set_page_config(page_title="AquaCortex 2.1", page_icon="🌊", layout="wide")
-st.title("💧 AquaCortex 2.1: Water Intelligence Platform")
+st.set_page_config(page_title="AquaCortex 2.0", page_icon="🌊", layout="wide")
+st.title("💧 AquaCortex 2.0: Water Intelligence Platform")
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
@@ -92,7 +92,7 @@ if mode == "📊 Test Data Analysis":
                 wi = weights[param]
                 qi = abs((vi - si) / (si - ii)) * 100
                 bwqi += qi * wi
-                st.write(f"{param} -> Avg: {vi:.2f}, qi: {qi:.2f}, wi: {wi:.2f}, Contribution: {qi * wi:.2f}")
+
 
         if bwqi <= 25:
             wqi_status = "Excellent"
@@ -182,6 +182,6 @@ elif mode == "💬 AI Water Chat":
             )
             ai_response = response.choices[0].message.content
             st.session_state.chat_history[-1]["ai"] = ai_response
-            st.experimental_rerun()
+            st.rerun()
         except Exception as e:
             st.error(f"AI Error: {e}")
