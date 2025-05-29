@@ -90,7 +90,7 @@ if mode == "📊 Test Data Analysis":
                 si = standard_vals[param]
                 ii = ideal_vals[param]
                 wi = weights[param]
-                qi = abs((vi - ii) / (si - ii)) * 100
+                qi = abs((vi - si) / (si - ii)) * 100
                 bwqi += qi * wi
                 st.write(f"{param} -> Avg: {vi:.2f}, qi: {qi:.2f}, wi: {wi:.2f}, Contribution: {qi * wi:.2f}")
 
